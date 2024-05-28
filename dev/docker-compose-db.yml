@@ -1,0 +1,57 @@
+version: "3"
+
+services:
+  db-cassandra:
+    image: cassandra:5.0
+    container_name: cassandra
+    ports:
+      - "9042:9042"
+    volumes:
+      - ./database/cassandra:/var/lib/cassandra/data
+      - ./database/cassandra.yaml:/etc/cassandra/cassandra.yaml
+    networks:
+      default:
+        ipv4_address: 172.100.0.200
+
+  db-mysql:
+    restart: always
+    image: mysql:5.7.18
+    container_name: mysql-lable
+    volumes:
+      - ./database/mysql/mydir:/mydir
+      - ./database/mysql/datadir:/var/lib/mysql
+      - ./database/mysql/conf/my.cnf:/etc/my.cnf
+    environment:
+      - "MYSQL_ROOT_PASSWORD=guyu"
+      - "MYSQL_DATABASE=123456"
+      - "TZ=Asia/Shanghai"
+    ports:
+      - "3306:3306"
+    networks:
+      default:
+        ipv4_address: 172.100.0.201
+
+
+  db-rabbit:
+    image: rabbitmq:3.12.6-management
+    hostname: rabbit
+    container_name: rabbitmq_3_12
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=root
+      - RABBITMQ_DEFAULT_PASS=123123
+    volumes:
+      - ./database/rabbitmq:/var/lib/rabbitmq
+    networks:
+      default:
+        ipv4_address: 172.100.0.202
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.100.0.0/24"

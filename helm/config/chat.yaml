@@ -1,0 +1,155 @@
+grpc:
+  - name: grpc
+    port: 8091
+    gwPort: 18091
+    enabled: true
+    enableReflection: true        # Enable gRPC reflection mainly for grpcurl
+    enableRkGwOption: true        # Enable RK style grpc-gateway options
+    noRecvMsgSizeLimit: true
+    grpcWeb:
+      enabled: true
+    commonService:
+      enabled: true
+    sw:
+      path: "/chat/sw"
+      enabled: true
+      jsonPaths: [ "chat/v1" ]
+      headers: [ ]
+    docs:
+      path: "/chat/docs"
+      enabled: true
+      specPaths: [ "chat/v1" ]
+    pprof:
+      enabled: true
+    prom:
+      enabled: true
+    loggerEntry: logger_user
+    eventEntry: event_user
+    middleware:
+      cors:
+        enabled: true
+        allowOrigins:
+          #          - "http://192.168.31.100:*"
+          #          - "http://localhost:*"
+          - "*"      # 测试环境开启所有跨域
+      logging:
+        enabled: true
+      prom:
+        enabled: true
+      jwt:
+        enabled: true
+        skipVerify: false
+        symmetric:
+          algorithm: HS256
+          token: "my-secret"
+        ignore: [ "/user.v1.UserLoginService/Login", "/user.v1.UserLoginService/Register","/user.v1.UserLoginService/LoginByPhone","/user.v1.UserLoginService/SendCaptchaByPhone","/user.v1.UserLoginService/RegisterByPhone", "/chat.v1.DeviceService/CheckDeviceRegister"]
+remote:
+  - name: remote
+    domain: "*"
+    enabled: true
+    clients:
+      - name: user
+        dns: user
+        port: 8097
+      - name: thirdparty
+        dns: thirdparty
+        port: 8096
+      - name: organization
+        dns: organization
+        port: 8094
+  - name: remote
+    domain: dev
+    enabled: true
+    clients:
+      - name: user
+        dns: user
+        port: 8097
+      - name: thirdparty
+        dns: thirdparty
+        port: 8096
+      - name: organization
+        dns: organization
+        port: 8094
+
+
+logger:
+  - name: logger
+    zap:
+      outputPaths: [ "logs/chat_log.log" ]
+event:
+  - name: event
+    outputPaths: [ "logs/chat_event.log" ]
+mysql:
+  - name: app-user                     # Required
+    enabled: true                     # Required
+    domain: dev
+    addr: "192.168.10.20:3306"            # Optional, default: localhost:3306
+    user: root                        # Optional, default: root
+    pass: guyu123456                        # Optional, default: pass
+    protocol: tcp                     # Optional, default: tcp
+    database:
+      - name: chat                    # Required
+        autoCreate: true              # Optional, default: false
+    logger:
+      level: info
+
+rabbitmq:
+  - name: rabbitmq
+    domain: "*"
+    enabled: true
+    addr: "192.168.10.100:5672"
+    user: "user"
+    pass: "guyu123456"
+  - name: rabbitmq
+    domain: dev
+    enabled: true
+    addr: "192.168.10.100:5672"
+    user: "user"
+    pass: "guyu123456"
+  - name: rabbitmq
+    domain: local
+    enabled: true
+    addr: "rabbitmq:5672"
+    user: "root"
+    pass: "123123"
+scyllaEntry:
+  - name: "scyllaEntry"
+    enabled: true
+    domain: "*"
+    loggerEntry: "logger"
+    config:
+      hosts: "192.168.10.224"
+      port: 9042
+      consistency: 10
+      keyspace: "chat"
+  - name: "scyllaEntry"
+    enabled: true
+    domain: dev
+    loggerEntry: "logger"
+    config:
+      hosts: "192.168.10.101"
+      port: 9042
+      consistency: 10
+      keyspace: "chat"
+  - name: "scyllaEntry"
+    enabled: true
+    domain: local
+    loggerEntry: "logger"
+    config:
+      hosts: "cassandra"
+      port: 9042
+      consistency: 10
+      keyspace: "chat"
+
+# 这里的consistency相对应下面
+#const (
+#	Any         Consistency = 0x00      0
+#	One         Consistency = 0x01      1
+#	Two         Consistency = 0x02      2
+#	Three       Consistency = 0x03      3
+#	Quorum      Consistency = 0x04      4
+#	All         Consistency = 0x05      5
+#	LocalQuorum Consistency = 0x06      6
+#	EachQuorum  Consistency = 0x07      7
+#	LocalOne    Consistency = 0x0A      10
+#)

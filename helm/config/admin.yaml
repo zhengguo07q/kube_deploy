@@ -1,0 +1,125 @@
+grpc:
+  - name: grpc
+    port: 8090
+    gwPort: 18090
+    enabled: true
+    enableReflection: true        # Enable gRPC reflection mainly for grpcurl
+    enableRkGwOption: true        # Enable RK style grpc-gateway options
+    noRecvMsgSizeLimit: true
+    grpcWeb:
+      enabled: true
+    commonService:
+      enabled: true
+    sw:
+      path: "/admin/sw"
+      enabled: true
+      jsonPaths: [ "admin/v1" ]
+      headers: [ ]
+    docs:
+      path: "/admin/docs"
+      enabled: true
+      specPaths: [ "admin/v1" ]
+    pprof:
+      enabled: true
+    prom:
+      enabled: true
+    loggerEntry: logger_user
+    eventEntry: event_user
+    middleware:
+      cors:
+        enabled: true
+        allowOrigins:
+          #          - "http://192.168.31.100:*"
+          #          - "http://localhost:*"
+          - "*"      # 测试环境开启所有跨域
+      logging:
+        enabled: true
+      prom:
+        enabled: true
+      jwt:
+        enabled: true
+        skipVerify: false
+        symmetric:
+          algorithm: HS256
+          token: "my-secret"
+        ignore: [ "/admin.v1.AdminUserService/Login" ]
+logger:
+  - name: logger
+    zap:
+      outputPaths: [ "logs/admin_log.log" ]
+event:
+  - name: event
+    outputPaths: [ "logs/admin_event.log" ]
+mysql:
+  - name: app-user                     # Required
+    enabled: true                     # Required
+    domain: local
+    addr: "127.0.0.1:3306"            # Optional, default: localhost:3306
+    user: root                        # Optional, default: root
+    pass: Or2452020438                        # Optional, default: pass
+    protocol: tcp                     # Optional, default: tcp
+    database:
+      - name: admin                    # Required
+        autoCreate: true              # Optional, default: false
+    logger:
+      level: info
+rabbitmq:
+  - name: rabbitmq
+    domain: "*"
+    enabled: true
+    addr: "192.168.10.100:5672"
+    user: "user"
+    pass: "guyu123456"
+  - name: rabbitmq
+    domain: dev
+    enabled: true
+    addr: "192.168.10.100:5672"
+    user: "user"
+    pass: "guyu123456"
+  - name: rabbitmq
+    domain: local
+    enabled: true
+    addr: "rabbitmq:5672"
+    user: "root"
+    pass: "123123"
+scyllaEntry:
+  - name: "scyllaEntry"
+    enabled: true
+    domain: "*"
+    loggerEntry: "logger"
+    config:
+      hosts: "192.168.10.224"
+      port: 9042
+      consistency: 10
+      keyspace: "admin"
+  - name: "scyllaEntry"
+    enabled: true
+    domain: dev
+    loggerEntry: "logger"
+    config:
+      hosts: "192.168.10.101"
+      port: 9042
+      consistency: 10
+      keyspace: "admin"
+  - name: "scyllaEntry"
+    enabled: true
+    domain: local
+    loggerEntry: "logger"
+    config:
+      hosts: "cassandra"
+      port: 9042
+      consistency: 10
+      keyspace: ""
+
+# 这里的consistency相对应下面
+#const (
+#	Any         Consistency = 0x00      0
+#	One         Consistency = 0x01      1
+#	Two         Consistency = 0x02      2
+#	Three       Consistency = 0x03      3
+#	Quorum      Consistency = 0x04      4
+#	All         Consistency = 0x05      5
+#	LocalQuorum Consistency = 0x06      6
+#	EachQuorum  Consistency = 0x07      7
+#	LocalOne    Consistency = 0x0A      10
+#)

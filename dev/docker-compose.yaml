@@ -1,0 +1,190 @@
+version: "3"
+
+services:
+  app-user:
+    image: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-user:latest
+    #image: greeter
+    volumes:
+      - "../helm/config/user.yaml:/deploy/helm/config/user.yaml"
+      - "../dev/data/dns/resolv.conf:/etc/resolv.conf"
+    ports:
+      - "8097:8097"
+      - "18097:18097"
+    environment:
+      - "DOMAIN=local"
+      - "GRPC_GO_LOG_VERBOSITY_LEVEL=99"
+      - "GRPC_GO_LOG_SEVERITY_LEVEL=debug"
+    networks:
+      default:
+        ipv4_address: 172.100.0.3
+    depends_on:
+      - core-envoy
+
+  app-admin:
+    image: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-admin:latest
+    build:
+      dockerfile: deploy/dockerfile/admin.Dockerfile
+      context: ../..
+    volumes:
+      - "../helm/config/admin.yaml:/deploy/helm/config/admin.yaml"
+      - "../dev/data/dns/resolv.conf:/etc/resolv.conf"
+    ports:
+      - "8090:8090"
+      - "18090:18090"
+    environment:
+      - "DOMAIN=local"
+      - "GRPC_GO_LOG_VERBOSITY_LEVEL=99"
+      - "GRPC_GO_LOG_SEVERITY_LEVEL=debug"
+    networks:
+      default:
+        ipv4_address: 172.100.0.6
+    depends_on:
+      - core-envoy
+
+  app-chat:
+    image: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-chat:latest
+    volumes:
+      - "../helm/config/chat.yaml:/deploy/helm/config/chat.yaml"
+      - "../dev/data/dns/resolv.conf:/etc/resolv.conf"
+    ports:
+      - "8091:8091"
+      - "18091:18091"
+    environment:
+      - "DOMAIN=local"
+      - "GRPC_GO_LOG_VERBOSITY_LEVEL=99"
+      - "GRPC_GO_LOG_SEVERITY_LEVEL=debug"
+    networks:
+      default:
+        ipv4_address: 172.100.0.7
+    depends_on:
+      - core-envoy
+
+  app-content:
+    image: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-content:latest
+    volumes:
+      - "../helm/config/content.yaml:/deploy/helm/config/content.yaml"
+      - "../dev/data/dns/resolv.conf:/etc/resolv.conf"
+    ports:
+      - "8092:8092"
+      - "18092:18092"
+    environment:
+      - "DOMAIN=local"
+      - "GRPC_GO_LOG_VERBOSITY_LEVEL=99"
+      - "GRPC_GO_LOG_SEVERITY_LEVEL=debug"
+    networks:
+      default:
+        ipv4_address: 172.100.0.8
+    depends_on:
+      - core-envoy
+
+  app-enterprise:
+    image: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-enterprise:latest
+    volumes:
+      - "../helm/config/enterprise.yaml:/deploy/helm/config/enterprise.yaml"
+      - "../dev/data/dns/resolv.conf:/etc/resolv.conf"
+    ports:
+      - "8093:8093"
+      - "18093:18093"
+    environment:
+      - "DOMAIN=local"
+      - "GRPC_GO_LOG_VERBOSITY_LEVEL=99"
+      - "GRPC_GO_LOG_SEVERITY_LEVEL=debug"
+    networks:
+      default:
+        ipv4_address: 172.100.0.9
+    depends_on:
+      - core-envoy
+
+  app-organization:
+    image: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-organization:latest
+    volumes:
+      - "../helm/config/organization.yaml:/deploy/helm/config/organization.yaml"
+      - "../dev/data/dns/resolv.conf:/etc/resolv.conf"
+    ports:
+      - "8094:8094"
+      - "18094:18094"
+    environment:
+      - "DOMAIN=local"
+      - "GRPC_GO_LOG_VERBOSITY_LEVEL=99"
+      - "GRPC_GO_LOG_SEVERITY_LEVEL=debug"
+    networks:
+      default:
+        ipv4_address: 172.100.0.4
+    depends_on:
+      - core-envoy
+
+  app-resume:
+    image: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-resume:latest
+    volumes:
+      - "../helm/config/resume.yaml:/deploy/helm/config/resume.yaml"
+      - "../dev/data/dns/resolv.conf:/etc/resolv.conf"
+    ports:
+      - "8095:8095"
+      - "18095:18095"
+    environment:
+      - "DOMAIN=local"
+      - "GRPC_GO_LOG_VERBOSITY_LEVEL=99"
+      - "GRPC_GO_LOG_SEVERITY_LEVEL=debug"
+    networks:
+      default:
+        ipv4_address: 172.100.0.11
+    depends_on:
+      - core-envoy
+
+  app-thirdparty:
+    image: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-thirdparty:latest
+    volumes:
+      - "../helm/config/thirdparty.yaml:/deploy/helm/config/thirdparty.yaml"
+      - "../dev/data/dns/resolv.conf:/etc/resolv.conf"
+    ports:
+      - "8096:8096"
+      - "18096:18096"
+    environment:
+      - "DOMAIN=local"
+      - "GRPC_GO_LOG_VERBOSITY_LEVEL=99"
+      - "GRPC_GO_LOG_SEVERITY_LEVEL=debug"
+    networks:
+      default:
+        ipv4_address: 172.100.0.5
+    depends_on:
+      - core-envoy
+
+  core-envoy:
+    image: envoyproxy/envoy-alpine:v1.21.6
+    volumes:
+      - "../dev/data/envoy/envoy.yaml:/etc/envoy/envoy.yaml"
+      - "../dev/data/dns/resolv.conf:/etc/resolv.conf"
+    networks:
+      default:
+        ipv4_address: 172.100.0.100
+    ports:
+      - "80:80"
+      - "8888:8888"
+    command:
+      - /usr/local/bin/envoy
+      - -c /etc/envoy/envoy.yaml
+#      - --log-level trace
+      - --component-log-level http:debug,router:debug
+    depends_on:
+      - core-dns
+
+  core-dns:
+    image: coredns/coredns:1.9.3
+    container_name: core-dns
+    volumes:
+      - "../dev/data/dns/Corefile:/Corefile"
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    restart: always
+    networks:
+      default:
+        ipv4_address: 172.100.0.2
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: "172.100.0.0/24"
+

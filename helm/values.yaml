@@ -1,0 +1,142 @@
+###############################################################################
+# 定义默认值
+###############################################################################
+
+namespace: "professional-server-dev"
+nameOverride: ""
+fullnameOverride: ""
+lastUpdated: 04-30-14-18
+env:
+  domain: dev
+
+# sa账户名
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+  automountServiceAccountToken: true
+
+#网关
+gateway:
+  selector: ingressgateway
+  hostname: dev.192.168.10.105.nip.io
+  httpsRedirect: false
+
+# 管理服务
+admin:
+  service:
+    type: ClusterIP
+    port: 8090
+    gwport: 18090
+  image:
+    imageRegistry: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-admin
+    tag: latest
+  replicas: 1
+  requests:
+    cpu: 300m
+    memory: 512Mi
+
+#聊天服务
+chat:
+  service:
+    type: ClusterIP
+    port: 8091
+    gwport: 18091
+  image:
+    imageRegistry: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-chat
+    tag: latest
+  version: v1
+  replicas: 1
+  requests:
+    cpu: 300m
+    memory: 512Mi
+
+#内容服务
+content:
+  service:
+    type: ClusterIP
+    port: 8092
+    gwport: 18092
+  image:
+    imageRegistry: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-content
+    tag: latest
+  version: v1
+  replicas: 1
+  requests:
+    cpu: 300m
+    memory: 512Mi
+
+#企业服务
+enterprise:
+  service:
+    type: ClusterIP
+    port: 8093
+    gwport: 18093
+  image:
+    imageRegistry: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-enterprise
+    tag: latest
+  version: v1
+  replicas: 1
+  requests:
+    cpu: 300m
+    memory: 512Mi
+
+#组织服务
+organization:
+  service:
+    type: ClusterIP
+    port: 8094
+    gwport: 18094
+  image:
+    imageRegistry: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-organization
+    tag: latest
+  version: v1
+  replicas: 1
+  requests:
+    cpu: 300m
+    memory: 512Mi
+
+#简历服务
+resume:
+  service:
+    type: ClusterIP
+    port: 8095
+    gwport: 18095
+  image:
+    imageRegistry: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-resume
+    tag: latest
+  version: v1
+  replicas: 1
+  requests:
+    cpu: 300m
+    memory: 512Mi
+
+#第三方服务
+thirdparty:
+  service:
+    type: ClusterIP
+    port: 8096
+    gwport: 18096
+  image:
+    imageRegistry: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-thirdparty
+    tag: latest
+  version: v1
+  replicas: 1
+  requests:
+    cpu: 300m
+    memory: 512Mi
+
+
+#用户服务
+user:
+  service:
+    type: ClusterIP
+    port: 8097
+    gwport: 18097
+  image:
+    imageRegistry: registry.cn-hangzhou.aliyuncs.com/dolphin-professional-dev/app-user
+    tag: latest
+  replicas: 1
+  requests:
+    cpu: 300m
+    memory: 512Mi

@@ -1,0 +1,143 @@
+##################################################################################################
+# 企业服务
+##################################################################################################
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: enterprise
+  namespace: {{ include "professional.namespace" . }}
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+    app: enterprise
+spec:
+  ports:
+  - port: {{ .Values.enterprise.service.port }}
+    name: http2-grpc
+    protocol: TCP
+  - port: {{ .Values.enterprise.service.gwport }}
+    name: http-gw
+    protocol: TCP
+  selector:
+    {{- include "professional.labels" . | nindent 4 }}
+    app: enterprise
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ include "professional.namespace" . }}
+  name: enterprise-v1
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+    app: enterprise
+    version: v1
+spec:
+  replicas: {{ .Values.enterprise.replicas }}
+  selector:
+    matchLabels:
+      {{- include "professional.labels" . | nindent 6 }}
+      app: enterprise
+      version: v1
+  template:
+    metadata:
+      namespace: {{ include "professional.namespace" . }}
+      labels:
+        {{- include "professional.labels" . | nindent 8 }}
+        app: enterprise
+        version: v1
+        lastUpdated: {{ .Values.lastUpdated }}
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      serviceAccountName: {{ include "professional.name" . }}
+      imagePullSecrets:
+        - name: aliyun
+      containers:
+        - name: enterprise
+          image:
+            {{ .Values.enterprise.image.imageRegistry}}:{{ .Values.enterprise.image.tag }}
+          imagePullPolicy: Always
+          env:
+            - name: DOMAIN
+              value: {{ .Values.env.domain }}
+          ports:
+          - containerPort: {{ .Values.enterprise.service.port }}
+          resources:
+            requests:
+              cpu: {{ .Values.enterprise.requests.cpu }}
+              memory: {{ .Values.enterprise.requests.memory }}
+          volumeMounts:
+              - name: enterprise-volume
+                mountPath: /deploy/helm/config/
+      volumes:
+        - name: enterprise-volume
+          configMap:
+            name: enterprise-cm
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: enterprise-cm
+  namespace: {{ include "professional.namespace" . }}
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+data:
+  enterprise.yaml: |
+    {{ .Files.Get "config/enterprise.yaml" | nindent 4 }}
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: enterprise
+  namespace: {{ include "professional.namespace" . }}
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+    app: enterprise
+    version: v1
+spec:
+  hosts:
+    - enterprise
+    - {{ .Values.gateway.hostname }}
+  gateways:
+    - {{ include "professional.name" . }}
+  http:
+    - match:
+        - uri:
+            prefix: /enterprise/sw
+        - uri:
+            prefix: /enterprise/docs
+        - uri:
+            prefix: /enterprise/v1
+      route:
+        - destination:
+            host: enterprise
+            port:
+              number: {{ .Values.enterprise.service.gwport }}
+            subset: v1
+          weight: 100
+    - match:
+        - uri:
+            prefix: /enterprise
+      route:
+        - destination:
+            host: enterprise
+            port:
+              number: {{ .Values.enterprise.service.port }}
+            subset: v1
+          weight: 100
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: enterprise
+  namespace: {{ include "professional.namespace" . }}
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+    app: enterprise
+    version: v1
+spec:
+  host: enterprise
+  subsets:
+    - labels:
+        version: v1
+      name: v1

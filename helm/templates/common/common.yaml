@@ -1,0 +1,73 @@
+################################################################################
+# 公共的配置
+################################################################################
+---
+### 添加应用
+apiVersion: app.k8s.io/v1beta1
+kind: Application
+metadata:
+  name: {{ include "professional.name" . }}
+  namespace: {{ include "professional.namespace" . }}
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+  annotations:
+    servicemesh.kubesphere.io/enabled: 'true'
+spec:
+  selector:
+    matchLabels:
+      {{- include "professional.labels" . | nindent 6 }}
+  addOwnerRef: true
+  componentKinds:
+    - group: ''
+      kind: Service
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: extensions
+      kind: Ingress
+    - group: servicemesh.kubesphere.io
+      kind: Strategy
+    - group: servicemesh.kubesphere.io
+      kind: ServicePolicy
+---
+{{- if .Values.serviceAccount.create }}
+apiVersion: v1
+kind: ServiceAccount
+automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+metadata:
+  name: {{ include "professional.name" . }}
+  namespace: {{ include "professional.namespace" . }}
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+{{- end }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "professional.name" . }}
+  namespace: {{ include "professional.namespace" . }}
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: GRPC
+    nginx.ingress.kubernetes.io/service-upstream: 'true'
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    cert-manager.io/cluster-issuer: cert-letsencrypt
+    nginx.ingress.kubernetes.io/upstream-vhost: app-user.professional-server-test.svc.cluster.local
+spec:
+  rules:
+    - host: dev.192.168.10.100.nip.io
+      http:
+        paths:
+          - path: /
+            backend:
+              service:
+                name: admin
+                port:
+                  number: {{ .Values.admin.service.gwport }}
+            pathType: ImplementationSpecific
+  tls:
+    - hosts:
+        - {{ .Values.gateway.hostname }}
+      secretName: professional-server-dev-ingress-tls

@@ -1,0 +1,49 @@
+---
+# 定义envoy网关
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: {{ include "professional.name" . }}
+  namespace: {{ include "professional.namespace" . }}
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: cert-letsencrypt
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: {{ include "professional.name" . }}
+      hosts:
+        - {{ .Values.gateway.hostname }}
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - {{ .Values.gateway.hostname }}
+---
+### 遥测配置日志
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: {{ include "professional.name" . }}
+  namespace: {{ include "professional.namespace" . }}
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "professional.labels" . | nindent 6 }}
+  accessLogging:
+    - providers:
+        - name: envoy
+      disabled: false
+  tracing:
+    - randomSamplingPercentage: 100

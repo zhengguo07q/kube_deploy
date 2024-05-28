@@ -1,0 +1,148 @@
+##################################################################################################
+  # 管理服务
+  ##################################################################################################
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin
+  namespace: {{ include "professional.namespace" . }}
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+    app: admin
+spec:
+  ports:
+    - port: {{ .Values.admin.service.port }}
+      name: http2-grpc
+      protocol: TCP
+    - port: {{ .Values.admin.service.gwport }}
+      name: http-gw
+      protocol: TCP
+  selector:
+    {{- include "professional.labels" . | nindent 4 }}
+    app: admin
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ include "professional.namespace" . }}
+  name: admin-v1
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+    app: admin
+    version: v1
+spec:
+  replicas: {{ .Values.admin.replicas }}
+  selector:
+    matchLabels:
+      {{- include "professional.labels" . | nindent 6 }}
+      app: admin
+      version: v1
+  template:
+    metadata:
+      namespace: {{ include "professional.namespace" . }}
+      labels:
+        {{- include "professional.labels" . | nindent 8 }}
+        app: admin
+        version: v1
+        lastUpdated: {{ .Values.lastUpdated }}
+      annotations:
+        sidecar.istio.io/inject: "true"
+    spec:
+      serviceAccountName: {{ include "professional.name" . }}
+      imagePullSecrets:
+        - name: aliyun
+      containers:
+        - name: admin
+          image:
+            {{ .Values.admin.image.imageRegistry}}:{{ .Values.admin.image.tag }}
+          imagePullPolicy: Always
+          env:
+            - name: DOMAIN
+              value: {{ .Values.env.domain }}
+          ports:
+            - containerPort: {{ .Values.admin.service.port }}
+          resources:
+            requests:
+              cpu: {{ .Values.admin.requests.cpu }}
+              memory: {{ .Values.admin.requests.memory }}
+          volumeMounts:
+            - name: admin-volume
+              mountPath: /deploy/helm/config/
+      volumes:
+        - name: admin-volume
+          configMap:
+            name: admin-cm
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: admin-cm
+  namespace: {{ include "professional.namespace" . }}
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+data:
+  admin.yaml: |
+    {{ .Files.Get "config/admin.yaml" | nindent 4 }}
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: admin
+  namespace: {{ include "professional.namespace" . }}
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+    app: admin
+    version: v1
+spec:
+  hosts:
+    - admin
+    - {{ .Values.gateway.hostname }}
+  gateways:
+    - {{ include "professional.name" . }}
+  http:
+    - match:
+        - uri:
+            prefix: /admin/sw
+        - uri:
+            prefix: /admin/docs
+        - uri:
+            prefix: /admin/v1
+        - uri:
+            prefix: /admin.v1
+          headers:
+            accept:
+              exact: application/grpc-web-text
+      route:
+        - destination:
+            host: admin
+            port:
+              number: {{ .Values.admin.service.gwport }}
+            subset: v1
+          weight: 100
+    - match:
+        - uri:
+            prefix: /admin
+      route:
+        - destination:
+            host: admin
+            port:
+              number: {{ .Values.admin.service.port }}
+            subset: v1
+          weight: 100
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: admin
+  namespace: {{ include "professional.namespace" . }}
+  labels:
+    {{- include "professional.labels" . | nindent 4 }}
+    app: admin
+    version: v1
+spec:
+  host: admin
+  subsets:
+    - labels:
+        version: v1
+      name: v1

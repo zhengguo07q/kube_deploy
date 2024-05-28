@@ -1,0 +1,11 @@
+# 包含 Chart 基本信息（例如版本和名称），以及依赖关系。
+apiVersion: v1  # 用于指定 Chart 的 API 版本，当前版本是 v2
+appVersion: v1  # 用于指定 Chart 的应用版本，当前部署版本，升级用
+description: professional helm helm chart
+# 定义helm chart的名称, 一般为项目名称，
+# 与版本组成helm chart的唯一标识，与values.yaml中的nameOverride对应,
+name: professional-server
+# 定义helm chart的版本，程序代码版本
+version: 0.0.1
+maintainers:
+  - name: gary

@@ -1,0 +1,164 @@
+grpc:
+  - name: grpc
+    port: 8095
+    gwPort: 18095
+    enabled: true
+    enableReflection: true        # Enable gRPC reflection mainly for grpcurl
+    enableRkGwOption: true        # Enable RK style grpc-gateway options
+    noRecvMsgSizeLimit: true
+    grpcWeb:
+      enabled: true
+    commonService:
+      enabled: true
+    sw:
+      path: "/resume/sw"
+      enabled: true
+      jsonPaths: [ "resume/v1" ]
+      headers: [ ]
+    docs:
+      path: "/resume/docs"
+      enabled: true
+      specPaths: [ "resume/v1" ]
+    pprof:
+      enabled: true
+    prom:
+      enabled: true
+    loggerEntry: logger_user
+    eventEntry: event_user
+    middleware:
+      cors:
+        enabled: true
+        allowOrigins:
+          #          - "http://192.168.31.100:*"
+          #          - "http://localhost:*"
+          - "*"      # 测试环境开启所有跨域
+      logging:
+        enabled: true
+      prom:
+        enabled: true
+      jwt:
+        enabled: true
+        skipVerify: false
+        symmetric:
+          algorithm: HS256
+          token: "my-secret"
+        ignore: [ ]
+remote:
+  - name: remote
+    enabled: true
+    domain: "*"
+    clients:
+      - name: organization
+        dns: organization
+        port: 8094
+      - name: thirdparty
+        dns: thirdparty
+        port: 8096
+      - name: content
+        dns: content
+        port: 8092
+      - name: user
+        dns: user
+        port: 8097
+      - name: chat
+        dns: chat
+        port: 8091
+  - name: remote
+    enabled: true
+    domain: dev
+    clients:
+      - name: organization
+        dns: organization
+        port: 8094
+      - name: thirdparty
+        dns: thirdparty
+        port: 8096
+      - name: content
+        dns: content
+        port: 8092
+      - name: user
+        dns: user
+        port: 8097
+      - name: chat
+        dns: chat
+        port: 8091
+logger:
+  - name: logger
+    zap:
+      outputPaths: [ "logs/resume_log.log" ]
+event:
+  - name: event
+    outputPaths: [ "logs/resume_event.log" ]
+rabbitmq:
+  - name: rabbitmq
+    domain: "*"
+    enabled: true
+    addr: "192.168.10.100:5672"
+    user: "user"
+    pass: "guyu123456"
+  - name: rabbitmq
+    domain: dev
+    enabled: true
+    addr: "192.168.10.100:5672"
+    user: "user"
+    pass: "guyu123456"
+  - name: rabbitmq
+    domain: local
+    enabled: true
+    addr: "rabbitmq:5672"
+    user: "root"
+    pass: "123123"
+mysql:
+  - name: app-user                     # Required
+    enabled: true                     # Required
+    domain: dev
+    addr: "192.168.10.20:3306"            # Optional, default: localhost:3306
+    user: root                        # Optional, default: root
+    pass: guyu123456                        # Optional, default: pass
+    protocol: tcp                     # Optional, default: tcp
+    database:
+      - name: resume                    # Required
+        autoCreate: true              # Optional, default: false
+    logger:
+      level: info
+scyllaEntry:
+  - name: "scyllaEntry"
+    enabled: true
+    domain: "*"
+    loggerEntry: "logger"
+    config:
+      hosts: "192.168.10.224"
+      port: 9042
+      consistency: 10
+      keyspace: "resume"
+  - name: "scyllaEntry"
+    enabled: true
+    domain: dev
+    loggerEntry: "logger"
+    config:
+      hosts: "192.168.10.101"
+      port: 9042
+      consistency: 10
+      keyspace: "resume"
+  - name: "scyllaEntry"
+    enabled: true
+    domain: local
+    loggerEntry: "logger"
+    config:
+      hosts: "cassandra"
+      port: 9042
+      consistency: 10
+      keyspace: "resume"
+
+# 这里的consistency相对应下面
+#const (
+#	Any         Consistency = 0x00      0
+#	One         Consistency = 0x01      1
+#	Two         Consistency = 0x02      2
+#	Three       Consistency = 0x03      3
+#	Quorum      Consistency = 0x04      4
+#	All         Consistency = 0x05      5
+#	LocalQuorum Consistency = 0x06      6
+#	EachQuorum  Consistency = 0x07      7
+#	LocalOne    Consistency = 0x0A      10
+#)
