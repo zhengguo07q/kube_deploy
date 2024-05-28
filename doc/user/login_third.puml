@@ -1,7 +1,0 @@
-@startuml
-'https://plantuml.com/sequence-diagram
-participant client as client
-participant login as login
-autonumber
-
-@enduml
